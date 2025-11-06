@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate Dashboard</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: #1a202c; }
+        /* Simple transition for page fades */
+        .page { transition: opacity 0.3s ease-in-out; }
+        .hidden { opacity: 0; display: none; }
+        .visible { opacity: 1; display: block; }
+        /* Active nav link style */
+        .nav-link.active { background-color: #4c51bf; color: white; }
+        /* Toast notification styles */
+        #toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out forwards;
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        .toast.success { background-color: #2f855a; }
+        .toast.error { background-color: #c53030; }
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateX(0); }
+        }
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 font-sans antialiased">
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- 
+      ============================================================
+      Login / Sign Up Screen
+      ============================================================
+    -->
+    <div id="auth-screen" class="flex items-center justify-center h-screen">
+        <div class="w-full max-w-sm bg-gray-800 p-8 rounded-xl shadow-xl space-y-6">
+            
+            <!-- Login Form (Default) -->
+            <form id="form-login">
+                <h2 class="text-3xl font-bold text-white text-center mb-6">Real Estate Login</h2>
+                <div>
+                    <label for="login-username" class="block text-sm font-medium text-gray-400">Username</label>
+                    <input type="text" name="username" id="login-username" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white">
+                </div>
+                <div class="mt-4">
+                    <label for="login-password" class="block text-sm font-medium text-gray-400">Password</label>
+                    <input type="password" name="password" id="login-password" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white">
+                </div>
+                <div class="pt-6">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                        Login
+                    </button>
+                </div>
+                <p class="text-sm text-center text-gray-400 mt-6">
+                    Don't have an account? 
+                    <a href="#" id="show-register" class="font-medium text-indigo-400 hover:text-indigo-300">Sign Up</a>
+                </p>
+            </form>
+
+            <!-- Sign Up Form (Hidden by default) -->
+            <form id="form-register" class="hidden">
+                <h2 class="text-3xl font-bold text-white text-center mb-6">Create Account</h2>
+                <div>
+                    <label for="register-username" class="block text-sm font-medium text-gray-400">Username</label>
+                    <input type="text" name="username" id="register-username" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white">
+                </div>
+                <div class="mt-4">
+                    <label for="register-password" class="block text-sm font-medium text-gray-400">Password</label>
+                    <input type="password" name="password" id="register-password" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white">
+                </div>
+                <div class="pt-6">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                        Create Account
+                    </button>
+                </div>
+                <p class="text-sm text-center text-gray-400 mt-6">
+                    Already have an account? 
+                    <a href="#" id="show-login" class="font-medium text-indigo-400 hover:text-indigo-300">Login</a>
+                </p>
+            </form>
+
+        </div>
+    </div>
+    <!-- ============================================================ -->
+    <!-- End Auth Screen -->
+    <!-- ============================================================ -->
+
+
+    <!-- Dashboard App Wrapper (hidden by default) -->
+    <div id="dashboard-app" class="hidden">
+        <div class="flex h-screen">
+            <!-- Sidebar Navigation -->
+            <nav class="w-64 bg-gray-800 p-6 flex-shrink-0 overflow-y-auto">
+                <h1 class="text-2xl font-bold text-white mb-8">Real Estate DB</h1>
+                <ul class="space-y-3">
+                    <li><a href="#" class="nav-link text-lg block p-3 rounded-lg hover:bg-gray-700" data-page="dashboard">Dashboard</a></li>
+                    <!-- UPDATED: Nav Links -->
+                    <li><a href="#" class="nav-link text-lg block p-3 rounded-lg hover:bg-gray-700" data-page="add-client">Add/Delete Client</a></li>
+                    <li><a href="#" class="nav-link text-lg block p-3 rounded-lg hover:bg-gray-700" data-page="add-contract">Add/Delete Contract</a></li>
+                    <li><a href="#" class="nav-link text-lg block p-3 rounded-lg hover:bg-gray-700" data-page="add-payment">Add Payment</a></li>
+                    <li><a href="#" class="nav-link text-lg block p-3 rounded-lg hover:bg-gray-700" data-page="agent-earnings">Agent Earnings</a></li>
+                    <li><a href="#" class="nav-link text-lg block p-3 rounded-lg hover:bg-gray-700" data-page="total-payments">Total Payments</a></li>
+                    <!-- NEW: Nav Link for Nested Query -->
+                    <li><a href="#" class="nav-link text-lg block p-3 rounded-lg hover:bg-gray-700" data-page="high-value-clients">High-Value Clients</a></li>
+                </ul>
+            </nav>
+
+            <!-- Main Content Area -->
+            <main class="flex-1 p-8 overflow-y-auto relative">
+                
+                <!-- Profile & Logout Header -->
+                <div class="absolute top-8 right-8 flex items-center gap-4 z-10">
+                    <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold shadow-md" id="profile-initial" title="Logged in">
+                    </div>
+                    <button id="logout-button" title="Logout" class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-300">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Page: Dashboard -->
+                <div id="page-dashboard" class="page">
+                    <h2 class="text-3xl font-semibold mb-6 pt-16">Dashboard</h2>
+                    <div id="stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-gray-800 p-6 rounded-xl shadow-lg animate-pulse h-32"></div>
+                        <div class="bg-gray-800 p-6 rounded-xl shadow-lg animate-pulse h-32"></div>
+                        <div class="bg-gray-800 p-6 rounded-xl shadow-lg animate-pulse h-32"></div>
+                        <div class="bg-gray-800 p-6 rounded-xl shadow-lg animate-pulse h-32"></div>
+                    </div>
+                </div>
+
+                <!-- Page: Add/Delete Client -->
+                <div id="page-add-client" class="page hidden">
+                    <h2 class="text-3xl font-semibold mb-6 pt-16">Add New Client</h2>
+                    <form id="form-add-client" class="max-w-xl bg-gray-800 p-8 rounded-xl shadow-xl space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label for="fname" class="block text-sm font-medium text-gray-400">First Name</label><input type="text" name="fname" id="fname" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"></div>
+                            <div><label for="lname" class="block text-sm font-medium text-gray-400">Last Name</label><input type="text" name="lname" id="lname" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"></div>
+                        </div>
+                        <div><label for="hire_date" class="block text-sm font-medium text-gray-400">Hire Date</label><input type="date" name="hire_date" id="hire_date" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"></div>
+                        <div><label for="address" class="block text-sm font-medium text-gray-400">Street Address</label><input type="text" name="address" id="address" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><label for="city" class="block text-sm font-medium text-gray-400">City</label><input type="text" name="city" id="city" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"></div>
+                            <div><label for="state" class="block text-sm font-medium text-gray-400">State (2-letter)</label><input type="text" name="state" id="state" required maxlength="2" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"></div>
+                            <div><label for="zip_code" class="block text-sm font-medium text-gray-400">ZIP Code</label><input type="text" name="zip_code" id="zip_code" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"></div>
+                        </div>
+                        <div class="pt-4"><button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Add Client</button></div>
+                    </form>
+                    
+                    <!-- NEW: Delete Client Section -->
+                    <div class="max-w-xl bg-gray-800 p-8 rounded-xl shadow-xl space-y-4 mt-8">
+                        <h3 class="text-xl font-semibold text-red-400">Delete Client</h3>
+                        <p class="text-sm text-gray-400">Warning: Deleting a client will also delete all of their contracts, payments, and commission records.</p>
+                        <div>
+                            <label for="delete-client-select" class="block text-sm font-medium text-gray-400">Client to Delete</label>
+                            <select id="delete-client-select" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white">
+                                <option value="">Loading clients...</option>
+                            </select>
+                        </div>
+                        <div class="pt-4">
+                            <button type="button" id="btn-delete-client" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                                Delete This Client
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page: Add/Delete Contract -->
+                <div id="page-add-contract" class="page hidden">
+                    <h2 class="text-3xl font-semibold mb-6 pt-16">Add New Contract</h2>
+                    <form id="form-add-contract" class="max-w-xl bg-gray-800 p-8 rounded-xl shadow-xl space-y-4">
+                        <div>
+                            <label for="contract-client-id" class="block text-sm font-medium text-gray-400">Client</label>
+                            <select id="contract-client-id" name="client_id" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white">
+                                <option value="">Loading clients...</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label for="contract-start-date" class="block text-sm font-medium text-gray-400">Start Date</label><input type="date" name="start_date" id="contract-start-date" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"></div>
+                            <div><label for="contract-end-date" class="block text-sm font-medium text-gray-400">End Date</label><input type="date" name="end_date" id="contract-end-date" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"></div>
+                        </div>
+                        <div id="date-validation-error" class="text-red-400 text-sm hidden">End Date must be after Start Date.</div>
+                        <div>
+                            <label for="contract-amount" class="block text-sm font-medium text-gray-400">Contract Amount</label>
+                            <input type="number" step="0.01" name="amount" id="contract-amount" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white">
+                        </div>
+                        <div class="pt-4"><button type="submit" id="submit-add-contract" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Add Contract</button></div>
+                    </form>
+                    
+                    <!-- NEW: Delete Contract Section -->
+                    <div class="max-w-xl bg-gray-800 p-8 rounded-xl shadow-xl space-y-4 mt-8">
+                        <h3 class="text-xl font-semibold text-red-400">Delete Contract</h3>
+                         <p class="text-sm text-gray-400">Warning: Deleting a contract will also delete all of its payments and commission records.</p>
+                        <div>
+                            <label for="delete-contract-select" class="block text-sm font-medium text-gray-400">Contract to Delete</label>
+                            <select id="delete-contract-select" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white">
+                                <option value="">Loading contracts...</option>
+                            </select>
+                        </div>
+                        <div class="pt-4">
+                            <button type="button" id="btn-delete-contract" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                                Delete This Contract
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Page: Add Payment -->
+                <div id="page-add-payment" class="page hidden">
+                    <h2 class="text-3xl font-semibold mb-6 pt-16">Add Payment & View Commission</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <form id="form-add-payment" class="lg:col-span-1 bg-gray-800 p-8 rounded-xl shadow-xl space-y-4 h-fit">
+                            <div><label for="payment-contract-id" class="block text-sm font-medium text-gray-400">Contract</label><select id="payment-contract-id" name="contract_id" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"><option value="">Loading contracts...</option></select></div>
+                            <div><label for="payment-amount" class="block text-sm font-medium text-gray-400">Payment Amount</label><input type="number" step="0.01" name="amount" id="payment-amount" required class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"></div>
+                            <div class="pt-4"><button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">Add Payment</button></div>
+                        </form>
+                        <div class="lg:col-span-2 space-y-6">
+                            <div id="payment-commission-report" class="bg-gray-800 p-6 rounded-xl shadow-xl hidden">
+                                <h3 class="text-xl font-semibold mb-4">Commission Update Report (From Trigger)</h3>
+                                <div id="commission-report-content" class="text-lg"></div>
+                            </div>
+                            <div class="bg-gray-800 p-6 rounded-xl shadow-xl">
+                                <h3 class="text-xl font-semibold mb-4">Payment History for Selected Contract</h3>
+                                <div id="payment-history-loading" class="text-gray-400 hidden">Loading payments...</div>
+                                <div id="payment-history-container" class="overflow-x-auto">
+                                    <table class="w-full min-w-max">
+                                        <thead class="border-b border-gray-600"><tr><th class="p-3 text-left">Payment No</th><th class="p-3 text-left">Payment Date</th><th class="p-3 text-right">Amount</th></tr></thead>
+                                        <tbody id="payment-history-table-body"><tr><td colspan="3" class="p-4 text-center text-gray-500">Select a contract to see its payment history.</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page: Agent Earnings -->
+                <div id="page-agent-earnings" class="page hidden">
+                    <h2 class="text-3xl font-semibold mb-6 pt-16">View Agent Earnings</h2>
+                    <div class="max-w-md mb-6">
+                        <label for="agent-select" class="block text-sm font-medium text-gray-400">Select an Agent</label>
+                        <select id="agent-select" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"><option value="">Loading agents...</option></select>
+                    </div>
+                    <div id="agent-earnings-loading" class="text-gray-400 text-lg hidden">Loading earnings...</div>
+                    <div id="agent-earnings-container" class="bg-gray-800 rounded-xl shadow-xl overflow-hidden hidden">
+                        <table class="w-full min-w-max">
+                            <thead class="border-b border-gray-600 bg-gray-700">
+                                <tr><th class="p-4 text-left">Contract ID</th><th class="p-4 text-left">Commission ID</th><th class="p-4 text-right">Contract Amount</th><th class="p-4 text-right">Percentage</th><th class="p-4 text-right">Potential Earning</th><th class="p-4 text-right">Actual Earned</th></tr>
+                            </thead>
+                            <tbody id="agent-earnings-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Page: Total Payments -->
+                <div id="page-total-payments" class="page hidden">
+                    <h2 class="text-3xl font-semibold mb-6 pt-16">View Total Payments per Contract</h2>
+                    <div class="max-w-md mb-6">
+                        <label for="total-payment-contract-select" class="block text-sm font-medium text-gray-400">Select a Contract</label>
+                        <select id="total-payment-contract-select" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg p-2.5 text-white"><option value="">Loading contracts...</option></select>
+                    </div>
+                    <div id="total-payment-loading" class="text-gray-400 text-lg hidden">Calculating total...</div>
+                    <div id="total-payment-result" class="bg-gray-800 rounded-xl shadow-xl p-8 max-w-md hidden">
+                        <h3 class="text-xl font-semibold text-gray-400">Total Payments Received</h3>
+                        <p id="total-payment-amount" class="text-4xl font-bold text-white mt-2"></p>
+                    </div>
+                </div>
+                
+                <!-- NEW: Page for Nested Query -->
+                <div id="page-high-value-clients" class="page hidden">
+                    <h2 class="text-3xl font-semibold mb-6 pt-16">High-Value Clients (Nested Query)</h2>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-xl">
+                        <p class="mb-4 text-gray-300">This report runs a nested query to find all clients with contracts valued higher than the average contract amount.</p>
+                        <div id="high-value-clients-loading" class="text-gray-400">Loading query results...</div>
+                        <div id="high-value-clients-container" class="overflow-x-auto hidden">
+                            <table class="w-full min-w-max">
+                                <thead class="border-b border-gray-600 bg-gray-700">
+                                    <tr><th class="p-4 text-left">Client Name</th><th class="p-4 text-left">Contract ID</th><th class="p-4 text-right">Contract Amount</th></tr>
+                                </thead>
+                                <tbody id="high-value-clients-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+    
+    <!-- NEW: Confirmation Modal -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="bg-gray-800 w-full max-w-md p-6 rounded-xl shadow-xl">
+            <h3 id="confirm-modal-title" class="text-2xl font-bold text-white">Are you sure?</h3>
+            <p id="confirm-modal-text" class="text-gray-300 my-4">This action cannot be undone.</p>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="confirm-modal-cancel" class="py-2 px-5 bg-gray-600 hover:bg-gray-500 rounded-lg font-medium">Cancel</button>
+                <button id="confirm-modal-confirm" class="py-2 px-5 bg-red-600 hover:bg-red-700 rounded-lg font-medium">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js" type="module" defer></script>
+</body>
+</html>
